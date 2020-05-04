@@ -1,5 +1,6 @@
 package com.mmb.cover;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -11,6 +12,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.media.Image;
 import android.net.Uri;
 import android.os.Build;
@@ -27,6 +29,8 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.scanlibrary.ScanActivity;
+import com.scanlibrary.ScanConstants;
 import com.soundcloud.android.crop.Crop;
 
 import java.io.ByteArrayOutputStream;
@@ -36,6 +40,8 @@ import java.io.IOException;
 import java.util.Random;
 
 import io.github.inflationx.viewpump.ViewPumpContextWrapper;
+import ja.burhanrashid52.photoeditor.PhotoEditor;
+import ja.burhanrashid52.photoeditor.PhotoEditorView;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -46,7 +52,6 @@ public class MainActivity extends AppCompatActivity {
     SeekBar seekBar;
     ConstraintLayout constraintLayout;
 
-    Uri imageUri;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,25 +64,6 @@ public class MainActivity extends AppCompatActivity {
         editText = findViewById(R.id.editText);
         btnEdit = findViewById(R.id.btnEdit);
         seekBar = findViewById(R.id.seekBar);
-
-
-        if (Build.VERSION.SDK_INT >= 23) {
-
-//            if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
-//
-//
-//            } else {
-            ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE}, 100);
-//            }
-
-        } //else {
-//            Intent intent = new Intent(
-//                    Intent.ACTION_PICK,
-//                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-//            startActivityForResult(intent, PICK_IMAGE);
-//
-//        }
-
 
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -113,7 +99,7 @@ public class MainActivity extends AppCompatActivity {
 
                 try {
                     String root = Environment.getExternalStorageDirectory().toString();
-                    File mydire = new File(root + "/Download/0instacover");
+                    File mydire = new File(root + "/Download");
                     if (!mydire.exists()) {
                         mydire.mkdirs();
                     }
@@ -137,6 +123,7 @@ public class MainActivity extends AppCompatActivity {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+                Toast.makeText(MainActivity.this, "در فولدر Download ذخیره شد", Toast.LENGTH_LONG).show();
 
             }
         });
@@ -145,12 +132,20 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
-                Crop.pickImage(MainActivity.this);
-//
-//                Intent intent = new Intent();
-//                intent.setType("image/*");
-//                intent.setAction(Intent.ACTION_GET_CONTENT);
-//                startActivityForResult(Intent.createChooser(intent, "Select Picture"), 123);
+                if (Build.VERSION.SDK_INT >= 23) {
+
+                    if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+//                        Crop.pickImage(MainActivity.this);
+                        openCamera();
+                    } else {
+                        ActivityCompat.requestPermissions(MainActivity.this, new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE}, 100);
+
+                    }
+                } else {
+//                    Crop.pickImage(MainActivity.this);
+                    openCamera();
+                }
+
             }
         });
 
@@ -176,9 +171,25 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    public void openCamera() {
+        int REQUEST_CODE = 99;
+        int preference = ScanConstants.OPEN_CAMERA;
+        Intent intent = new Intent(this, ScanActivity.class);
+        intent.putExtra(ScanConstants.OPEN_INTENT_PREFERENCE, preference);
+        startActivityForResult(intent, REQUEST_CODE);
+    }
+
+    public void openGallery(View v) {
+        int REQUEST_CODE = 99;
+        int preference = ScanConstants.OPEN_MEDIA;
+        Intent intent = new Intent(this, ScanActivity.class);
+        intent.putExtra(ScanConstants.OPEN_INTENT_PREFERENCE, preference);
+        startActivityForResult(intent, REQUEST_CODE);
+    }
+
     private void beginCrop(Uri source) {
         Uri destination = Uri.fromFile(new File(getCacheDir(), "cropped"));
-        Crop.of(source, destination).withAspect(100,155).start(this);
+        Crop.of(source, destination).withAspect(100, 155).start(this);
     }
 
     private void handleCrop(int resultCode, Intent result) {
@@ -190,16 +201,41 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 100) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+//                Crop.pickImage(MainActivity.this);
+                openCamera();
+            } else {
+                Toast.makeText(this, "لطفا دسرتسی را تایید کنید", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
 
-        if (requestCode == Crop.REQUEST_PICK && resultCode == RESULT_OK) {
-            beginCrop(data.getData());
-        } else if (requestCode == Crop.REQUEST_CROP) {
-            handleCrop(resultCode, data);
-        }
+        if (requestCode == 99 && resultCode == Activity.RESULT_OK) {
+            Uri uri = data.getExtras().getParcelable(ScanConstants.SCANNED_RESULT);
+            Bitmap bitmap = null;
+            try {
+                bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), uri);
+                getContentResolver().delete(uri, null, null);
 
+                imgPic.setImageBitmap(bitmap);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+//
+//        if (requestCode == Crop.REQUEST_PICK && resultCode == RESULT_OK) {
+//            beginCrop(data.getData());
+//        } else if (requestCode == Crop.REQUEST_CROP) {
+//            handleCrop(resultCode, data);
+//        }
 
 
 //        if (requestCode == Crop.REQUEST_CROP && resultCode == RESULT_OK) {

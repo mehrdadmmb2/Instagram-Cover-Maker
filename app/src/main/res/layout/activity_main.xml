@@ -11,6 +11,8 @@
         android:layout_width="300dp"
         android:layout_height="465dp"
         app:layout_constraintEnd_toEndOf="parent"
+        android:background="@drawable/back"
+        android:padding="2dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
@@ -42,11 +44,6 @@
             app:layout_constraintBottom_toBottomOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <RelativeLayout
-        android:id="@+id/dropLayout"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
-        android:background="#20AD70"></RelativeLayout>
 
     <EditText
         android:id="@+id/editText"
@@ -69,7 +66,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:max="100"
-        android:min="40"
+        android:min="20"
         app:layout_constraintBottom_toTopOf="@+id/editText"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
