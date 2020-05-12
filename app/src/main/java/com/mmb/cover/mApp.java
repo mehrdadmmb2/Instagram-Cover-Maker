@@ -1,6 +1,7 @@
 package com.mmb.cover;
 
 import android.app.Application;
+import android.content.Context;
 
 import io.github.inflationx.calligraphy3.CalligraphyConfig;
 import io.github.inflationx.calligraphy3.CalligraphyInterceptor;
@@ -11,7 +12,6 @@ public class mApp extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-
         ViewPump.init(ViewPump.builder()
                 .addInterceptor(new CalligraphyInterceptor(
                         new CalligraphyConfig.Builder()
@@ -20,4 +20,5 @@ public class mApp extends Application {
                                 .build()))
                 .build());
     }
+
 }

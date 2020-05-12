@@ -1,2 +1,2 @@
-include ':app', ':scanlibrary'
+include ':app', ':scanlibrary', ':openCVLibrary'
 rootProject.name='Cover'
